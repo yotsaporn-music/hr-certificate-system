@@ -251,7 +251,10 @@
       <div class="search-emp">
         <input type="text" id="empTableSearch" placeholder="ค้นหาชื่อ/รหัส/ตำแหน่ง..." oninput="renderTable()">
       </div>
-      <button class="btn btn-danger btn-sm" onclick="clearData()">🗑️ ลบข้อมูลทั้งหมด</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-gold btn-sm" onclick="showCloudUploadModal()">☁️ บันทึกขึ้น Cloud</button>
+        <button class="btn btn-danger btn-sm" onclick="clearData()">🗑️ ลบข้อมูลทั้งหมด</button>
+      </div>
     </div>
     <div class="table-wrap">
       <table>
@@ -404,18 +407,8 @@ const TEMPLATES = [
 ];
 
 // ============================================================
-// INIT
+// INIT (replaced by async version at bottom)
 // ============================================================
-function init(){
-  loadData();
-  loadSettings();
-  renderTemplates();
-  populateCountries();
-  renderTable();
-  updateStats();
-  loadSettingsToForm();
-  updateSettingsPreview();
-}
 
 function loadData(){
   try{ employees = JSON.parse(localStorage.getItem('hrEmp')||'[]'); }catch(e){ employees=[]; }
@@ -947,8 +940,85 @@ function toast(msg,type='success'){
 }
 
 // ============================================================
+// CLOUD SYNC (API backend)
+// ============================================================
+async function loadEmployeesFromCloud(){
+  try{
+    const res=await fetch('/api/employees');
+    if(!res.ok) return false;
+    const data=await res.json();
+    if(Array.isArray(data)&&data.length>0){
+      employees=data;
+      localStorage.setItem('hrEmp',JSON.stringify(employees));
+      return true;
+    }
+    return false;
+  }catch(e){ return false; }
+}
+
+async function saveEmployeesToCloud(pw){
+  const res=await fetch('/api/employees',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({password:pw,employees}),
+  });
+  const json=await res.json();
+  if(!res.ok) throw new Error(json.error||'Upload failed');
+  return json;
+}
+
+function showCloudUploadModal(){
+  if(!employees.length){toast('กรุณานำเข้าข้อมูลพนักงานก่อน','error');return;}
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML=`<div style="background:#fff;border-radius:12px;padding:28px;width:360px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <h3 style="font-size:17px;font-weight:700;color:#1a2744;margin-bottom:8px">☁️ บันทึกข้อมูลขึ้น Cloud</h3>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:16px">ข้อมูลพนักงาน <strong>${employees.length} คน</strong> จะถูกบันทึกขึ้น server<br>ทุก device จะเห็นข้อมูลชุดเดียวกัน</p>
+    <label style="font-size:12px;font-weight:700;color:#1a2744;text-transform:uppercase;letter-spacing:.5px">รหัสผ่าน Admin</label>
+    <input type="password" id="cloudPw" placeholder="กรอกรหัสผ่าน..." style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;margin:6px 0 16px;outline:none;box-sizing:border-box">
+    <div style="display:flex;gap:10px">
+      <button onclick="this.closest('div[style]').remove()" style="flex:1;padding:10px;border:2px solid #e5e7eb;border-radius:8px;background:#fff;cursor:pointer;font-family:'Sarabun',sans-serif;font-weight:600;font-size:14px">ยกเลิก</button>
+      <button id="cloudSaveBtn" onclick="doCloudSave(this)" style="flex:1;padding:10px;border:none;border-radius:8px;background:#c9a84c;color:#1a2744;cursor:pointer;font-family:'Sarabun',sans-serif;font-weight:700;font-size:14px">บันทึก ☁️</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  setTimeout(()=>document.getElementById('cloudPw')?.focus(),100);
+}
+
+async function doCloudSave(btn){
+  const pw=document.getElementById('cloudPw').value;
+  if(!pw){toast('กรุณากรอกรหัสผ่าน','error');return;}
+  btn.textContent='กำลังบันทึก...';btn.disabled=true;
+  try{
+    const r=await saveEmployeesToCloud(pw);
+    btn.closest('div[style]').remove();
+    toast(`✅ บันทึกขึ้น Cloud สำเร็จ! ${r.count} คน`);
+  }catch(e){
+    btn.textContent='บันทึก ☁️';btn.disabled=false;
+    toast('❌ '+e.message,'error');
+  }
+}
+
+// ============================================================
 // START
 // ============================================================
+async function init(){
+  loadData();
+  loadSettings();
+  renderTemplates();
+  populateCountries();
+  renderTable();
+  updateStats();
+  loadSettingsToForm();
+  updateSettingsPreview();
+  // Try to load from cloud first
+  const fromCloud=await loadEmployeesFromCloud();
+  if(fromCloud){
+    renderTable();
+    updateStats();
+    console.log('Loaded employees from cloud');
+  }
+}
 init();
 </script>
 </body>
