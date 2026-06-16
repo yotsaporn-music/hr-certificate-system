@@ -1,6 +1,6 @@
 const GIST_ID = process.env.GIST_ID;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'hr@mega2025';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'MegaHR2025';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
