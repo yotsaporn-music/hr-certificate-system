@@ -29,7 +29,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     const { password, employees } = req.body;
-    if (!password || password !== ADMIN_PASSWORD) {
+    if (!password || password.trim() !== ADMIN_PASSWORD.trim()) {
       return res.status(401).json({ error: 'รหัสผ่านไม่ถูกต้อง' });
     }
     if (!Array.isArray(employees)) {
