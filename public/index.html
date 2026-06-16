@@ -151,6 +151,7 @@
 
   .toast{position:fixed;bottom:24px;right:24px;background:#1a2744;color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;z-index:999;animation:slideIn .3s ease;box-shadow:0 4px 12px rgba(0,0,0,.3)}
   @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  @keyframes spin{to{transform:rotate(360deg)}}
 
   .empty-state{text-align:center;padding:40px;color:#9ca3af;font-size:14px}
 </style>
@@ -960,14 +961,24 @@ async function loadEmployeesFromCloud(){
 }
 
 async function saveEmployeesToCloud(pw){
-  const res=await fetch('/api/employees',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({password:pw,employees}),
-  });
-  const json=await res.json();
-  if(!res.ok) throw new Error(json.error||'Upload failed');
-  return json;
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),60000); // 60s timeout for large datasets
+  try{
+    const res=await fetch('/api/employees',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:pw,employees}),
+      signal:controller.signal,
+    });
+    clearTimeout(timer);
+    const json=await res.json();
+    if(!res.ok) throw new Error(json.error||'Upload failed');
+    return json;
+  }catch(e){
+    clearTimeout(timer);
+    if(e.name==='AbortError') throw new Error('หมดเวลา กรุณาลองใหม่');
+    throw e;
+  }
 }
 
 function showCloudUploadModal(){
@@ -991,13 +1002,20 @@ function showCloudUploadModal(){
 async function doCloudSave(btn){
   const pw=document.getElementById('cloudPw').value;
   if(!pw){toast('กรุณากรอกรหัสผ่าน','error');return;}
-  btn.textContent='กำลังบันทึก...';btn.disabled=true;
+  const modal=btn.closest('div[style*="position:fixed"]');
+  // Show loading overlay inside modal
+  const loadEl=document.createElement('div');
+  loadEl.style.cssText='position:absolute;inset:0;background:rgba(255,255,255,.85);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px';
+  loadEl.innerHTML=`<div style="width:40px;height:40px;border:4px solid #e5e7eb;border-top-color:#1a2744;border-radius:50%;animation:spin 1s linear infinite"></div><div style="font-size:14px;font-weight:600;color:#1a2744">กำลังบันทึก ${employees.length} คน...<br><span style="font-size:12px;color:#6b7280;font-weight:400">อาจใช้เวลา 10-30 วินาที</span></div>`;
+  modal.style.position='relative';
+  modal.appendChild(loadEl);
   try{
     const r=await saveEmployeesToCloud(pw);
-    btn.closest('div[style]').remove();
+    modal.remove();
     toast(`✅ บันทึกขึ้น Cloud สำเร็จ! ${r.count} คน`);
   }catch(e){
-    btn.textContent='บันทึก ☁️';btn.disabled=false;
+    loadEl.remove();
+    modal.style.position='';
     toast('❌ '+e.message,'error');
   }
 }
