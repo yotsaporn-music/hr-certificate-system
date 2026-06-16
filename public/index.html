@@ -944,7 +944,10 @@ function toast(msg,type='success'){
 // ============================================================
 async function loadEmployeesFromCloud(){
   try{
-    const res=await fetch('/api/employees');
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),8000);
+    const res=await fetch('/api/employees',{signal:controller.signal});
+    clearTimeout(timer);
     if(!res.ok) return false;
     const data=await res.json();
     if(Array.isArray(data)&&data.length>0){
@@ -1002,7 +1005,7 @@ async function doCloudSave(btn){
 // ============================================================
 // START
 // ============================================================
-async function init(){
+function init(){
   loadData();
   loadSettings();
   renderTemplates();
@@ -1011,13 +1014,10 @@ async function init(){
   updateStats();
   loadSettingsToForm();
   updateSettingsPreview();
-  // Try to load from cloud first
-  const fromCloud=await loadEmployeesFromCloud();
-  if(fromCloud){
-    renderTable();
-    updateStats();
-    console.log('Loaded employees from cloud');
-  }
+  // Load from cloud in background — non-blocking
+  loadEmployeesFromCloud().then(ok=>{
+    if(ok){ renderTable(); updateStats(); }
+  });
 }
 init();
 </script>
