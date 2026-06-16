@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR Certificate Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Sarabun',sans-serif;background:#f0f2f5;color:#222;min-height:100vh}
+  :root{--navy:#1a2744;--gold:#c9a84c;--light-gold:#f5e9c8;--gray:#6b7280;--red:#dc2626;--green:#16a34a}
+
+  /* NAV */
+  header{background:var(--navy);color:#fff;padding:0 24px;display:flex;align-items:center;gap:16px;height:60px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+  header h1{font-size:18px;font-weight:700;color:var(--gold);white-space:nowrap;margin-right:8px}
+  nav{display:flex;gap:4px;flex:1}
+  nav button{background:none;border:none;color:#aab4c8;padding:8px 16px;border-radius:6px;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:500;transition:all .2s;white-space:nowrap}
+  nav button.active{background:var(--gold);color:var(--navy);font-weight:700}
+  nav button:hover:not(.active){background:rgba(201,168,76,.15);color:#fff}
+
+  /* PAGES */
+  .page{display:none;height:calc(100vh - 60px)}
+  .page.active{display:flex}
+
+  /* PAGE 1 LAYOUT */
+  #page-issue{flex-direction:row}
+  .left-panel{width:360px;min-width:360px;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;overflow-y:auto}
+  .right-panel{flex:1;overflow-y:auto;background:#e8eaf0;display:flex;flex-direction:column;align-items:center;padding:24px}
+
+  /* LEFT PANEL */
+  .panel-section{padding:16px;border-bottom:1px solid #f0f0f0}
+  .panel-section h3{font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+  .search-row{display:flex;gap:8px}
+  .search-row input{flex:1;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+  .search-row input:focus{border-color:var(--navy)}
+  .btn{padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;transition:all .2s}
+  .btn-primary{background:var(--navy);color:#fff}
+  .btn-primary:hover{background:#243560}
+  .btn-gold{background:var(--gold);color:var(--navy)}
+  .btn-gold:hover{background:#b8963f}
+  .btn-danger{background:var(--red);color:#fff}
+  .btn-danger:hover{background:#b91c1c}
+  .btn-sm{padding:6px 12px;font-size:13px}
+  .btn-outline{background:#fff;border:2px solid var(--navy);color:var(--navy)}
+  .btn-outline:hover{background:var(--navy);color:#fff}
+
+  /* EMP CARD */
+  .emp-card{background:linear-gradient(135deg,var(--navy),#243560);color:#fff;border-radius:10px;padding:14px;margin-top:4px}
+  .emp-card .emp-id{font-size:11px;color:var(--gold);font-weight:700;letter-spacing:1px}
+  .emp-card .emp-name{font-size:16px;font-weight:700;margin:4px 0 2px}
+  .emp-card .emp-meta{font-size:12px;color:#aab4c8;line-height:1.6}
+  .status-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700}
+  .status-active{background:#dcfce7;color:#16a34a}
+  .status-resigned{background:#fee2e2;color:#dc2626}
+
+  /* TEMPLATE BUTTONS */
+  .tmpl-btn{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;background:#fff;width:100%;text-align:left;transition:all .2s;margin-bottom:8px;font-family:'Sarabun',sans-serif}
+  .tmpl-btn:hover:not(:disabled){border-color:var(--navy);background:#f8faff}
+  .tmpl-btn.selected{border-color:var(--navy);background:#eef2ff}
+  .tmpl-btn:disabled{opacity:.33;cursor:not-allowed}
+  .tmpl-num{width:24px;height:24px;min-width:24px;background:var(--navy);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+  .tmpl-btn:disabled .tmpl-num{background:#9ca3af}
+  .tmpl-info{flex:1}
+  .tmpl-title{font-size:13px;font-weight:600;color:var(--navy);line-height:1.4}
+  .tmpl-btn:disabled .tmpl-title{color:#9ca3af}
+  .tmpl-sub{font-size:11px;color:#6b7280;margin-top:2px}
+
+  /* LANG TOGGLE */
+  .lang-toggle{display:flex;gap:0;border:2px solid var(--navy);border-radius:8px;overflow:hidden}
+  .lang-toggle button{flex:1;padding:8px;border:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;transition:all .2s;background:#fff;color:var(--navy)}
+  .lang-toggle button.active{background:var(--navy);color:#fff}
+
+  /* TRAVEL FIELDS */
+  .travel-fields{background:#f8faff;border:1px solid #dbeafe;border-radius:8px;padding:12px;margin-top:8px}
+  .travel-fields label{display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:4px;margin-top:8px}
+  .travel-fields label:first-child{margin-top:0}
+  .travel-fields select,.travel-fields input{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:13px;outline:none}
+  .travel-fields select:focus,.travel-fields input:focus{border-color:var(--navy)}
+
+  /* CERT PREVIEW */
+  .cert-placeholder{background:#fff;border-radius:12px;padding:40px;text-align:center;color:#9ca3af;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .cert-wrapper{background:#fff;width:210mm;min-height:297mm;padding:20mm 20mm 20mm 25mm;box-shadow:0 4px 20px rgba(0,0,0,.15);border-radius:4px;position:relative}
+  .cert-actions{display:flex;gap:12px;margin-bottom:16px}
+
+  /* CERTIFICATE CONTENT */
+  .cert-header{text-align:center;margin-bottom:12px}
+  .cert-logo{max-height:80px;max-width:200px;object-fit:contain}
+  .cert-company-th{font-size:18px;font-weight:700;color:var(--navy);margin-top:6px}
+  .cert-company-en{font-size:14px;color:var(--navy)}
+  .cert-address{font-size:12px;color:#444;margin-top:4px;line-height:1.6}
+  .cert-divider{border:none;border-top:2px solid var(--navy);margin:10px 0}
+  .cert-title{font-size:20px;font-weight:700;color:var(--navy);text-align:center;margin:12px 0 6px}
+  .cert-ref-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:16px}
+  .cert-body{font-size:14px;line-height:2;text-align:justify}
+  .cert-body p{margin-bottom:8px}
+  .cert-details{margin:12px 0 16px;padding-left:20px}
+  .cert-details tr td:first-child{color:#333;padding-right:8px;white-space:nowrap;vertical-align:top;padding-bottom:4px}
+  .cert-details tr td:last-child{font-weight:600;color:#111;padding-bottom:4px}
+  .cert-sign{margin-top:40px;text-align:center}
+  .cert-sign-line{margin:0 auto 6px;width:220px;border-top:1px solid #333}
+
+  /* PAGES 2,3 */
+  #page-emp,#page-settings{flex-direction:column;overflow-y:auto;padding:24px;gap:20px}
+  .card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .card h2{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .stats-row{display:flex;gap:16px;flex-wrap:wrap}
+  .stat-box{flex:1;min-width:120px;background:linear-gradient(135deg,var(--navy),#243560);color:#fff;border-radius:10px;padding:16px 20px;text-align:center}
+  .stat-box .stat-num{font-size:32px;font-weight:700;color:var(--gold)}
+  .stat-box .stat-label{font-size:13px;color:#aab4c8}
+
+  /* DROP ZONE */
+  .dropzone{border:2px dashed #d1d5db;border-radius:10px;padding:40px;text-align:center;cursor:pointer;transition:all .2s;background:#fafafa}
+  .dropzone:hover,.dropzone.dragover{border-color:var(--navy);background:#f0f4ff}
+  .dropzone .dz-icon{font-size:48px;margin-bottom:8px}
+  .dropzone p{color:#6b7280;font-size:14px}
+  .dropzone strong{color:var(--navy)}
+
+  /* TABLE */
+  .table-wrap{overflow-x:auto;border-radius:8px;border:1px solid #e5e7eb}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:var(--navy);color:#fff;padding:10px 12px;text-align:left;font-weight:600;white-space:nowrap}
+  td{padding:8px 12px;border-bottom:1px solid #f0f0f0;vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#f8faff}
+  .search-emp input{padding:10px 14px;border:2px solid #e5e7eb;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;outline:none;width:300px;transition:border-color .2s}
+  .search-emp input:focus{border-color:var(--navy)}
+
+  /* SETTINGS FORM */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .form-group{display:flex;flex-direction:column;gap:4px}
+  .form-group.full{grid-column:1/-1}
+  .form-group label{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px}
+  .form-group input,.form-group textarea{padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+  .form-group input:focus,.form-group textarea:focus{border-color:var(--navy)}
+  .form-group textarea{resize:vertical;min-height:70px}
+  .logo-preview{max-height:80px;max-width:200px;object-fit:contain;border:1px solid #e5e7eb;border-radius:6px;padding:4px}
+
+  /* CERT PREVIEW IN SETTINGS */
+  .cert-header-preview{background:#f8faff;border:1px solid #dbeafe;border-radius:8px;padding:16px;text-align:center}
+
+  /* PRINT */
+  @media print{
+    body{background:#fff}
+    header,nav,.left-panel,.right-panel>.cert-actions,.cert-placeholder,.page:not(#page-issue){display:none!important}
+    .page#page-issue{display:block!important;height:auto}
+    .right-panel{padding:0;background:#fff;display:block}
+    .cert-wrapper{box-shadow:none;width:100%;min-height:auto;padding:15mm 15mm 15mm 20mm}
+    @page{size:A4 portrait;margin:0}
+  }
+
+  .toast{position:fixed;bottom:24px;right:24px;background:#1a2744;color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;z-index:999;animation:slideIn .3s ease;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+  @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+  .empty-state{text-align:center;padding:40px;color:#9ca3af;font-size:14px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏥 HR Certificate</h1>
+  <nav>
+    <button class="active" onclick="showPage('issue',this)">📄 ออกหนังสือรับรอง</button>
+    <button onclick="showPage('emp',this)">👥 จัดการข้อมูลพนักงาน</button>
+    <button onclick="showPage('settings',this)">⚙️ ตั้งค่าบริษัท</button>
+  </nav>
+</header>
+
+<!-- PAGE 1: ISSUE -->
+<div id="page-issue" class="page active">
+  <div class="left-panel">
+    <!-- Search -->
+    <div class="panel-section">
+      <h3>ค้นหาพนักงาน</h3>
+      <div class="search-row">
+        <input type="text" id="empSearch" placeholder="รหัสพนักงาน..." onkeydown="if(event.key==='Enter')searchEmployee()">
+        <button class="btn btn-primary" onclick="searchEmployee()">ค้นหา</button>
+      </div>
+      <div id="empCard" style="margin-top:12px"></div>
+    </div>
+
+    <!-- Templates -->
+    <div class="panel-section">
+      <h3>เลือกประเภทหนังสือ</h3>
+      <div id="tmplList"></div>
+    </div>
+
+    <!-- Travel Fields -->
+    <div class="panel-section" id="travelSection" style="display:none">
+      <h3>ข้อมูลการเดินทาง</h3>
+      <div class="travel-fields">
+        <label>ประเทศปลายทาง</label>
+        <select id="travelCountry"></select>
+        <label>วันที่เดินทาง</label>
+        <input type="date" id="travelDepart">
+        <label>วันที่กลับ</label>
+        <input type="date" id="travelReturn">
+      </div>
+    </div>
+
+    <!-- Lang + Generate -->
+    <div class="panel-section">
+      <h3>ภาษาหนังสือ</h3>
+      <div class="lang-toggle">
+        <button class="active" id="langTH" onclick="setLang('th')">🇹🇭 ภาษาไทย</button>
+        <button id="langEN" onclick="setLang('en')">🇬🇧 English</button>
+      </div>
+      <button class="btn btn-gold" style="width:100%;margin-top:12px" onclick="generateCert()">สร้างหนังสือรับรอง ▶</button>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="cert-actions" id="certActions" style="display:none">
+      <button class="btn btn-primary" onclick="window.print()">🖨️ พิมพ์</button>
+      <button class="btn btn-outline" onclick="window.print()">💾 บันทึก PDF</button>
+    </div>
+    <div id="certPreview">
+      <div class="cert-placeholder">
+        <div style="font-size:64px;margin-bottom:12px">📄</div>
+        <p>ค้นหาพนักงาน เลือกประเภทหนังสือ แล้วกด "สร้างหนังสือรับรอง"</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2: EMPLOYEE -->
+<div id="page-emp" class="page">
+  <div class="card">
+    <h2>📊 สถิติพนักงาน</h2>
+    <div class="stats-row" id="statsRow">
+      <div class="stat-box"><div class="stat-num" id="statTotal">0</div><div class="stat-label">พนักงานทั้งหมด</div></div>
+      <div class="stat-box"><div class="stat-num" id="statActive">0</div><div class="stat-label">พนักงานปัจจุบัน</div></div>
+      <div class="stat-box"><div class="stat-num" id="statResigned">0</div><div class="stat-label">พนักงานที่ลาออก</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📥 นำเข้าข้อมูลจาก Excel</h2>
+    <div class="dropzone" id="dropzone" onclick="document.getElementById('excelFile').click()" ondragover="dzDragOver(event)" ondragleave="dzDragLeave(event)" ondrop="dzDrop(event)">
+      <div class="dz-icon">📂</div>
+      <p><strong>คลิกเพื่อเลือกไฟล์</strong> หรือลากวางไฟล์ Excel ที่นี่</p>
+      <p style="font-size:12px;margin-top:4px">รองรับไฟล์ .xlsx — อ่านชีต "DataEmployee Back Up..."</p>
+    </div>
+    <input type="file" id="excelFile" accept=".xlsx,.xls" style="display:none" onchange="handleFile(event)">
+    <div id="importMsg" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card">
+    <h2>👥 รายชื่อพนักงาน</h2>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+      <div class="search-emp">
+        <input type="text" id="empTableSearch" placeholder="ค้นหาชื่อ/รหัส/ตำแหน่ง..." oninput="renderTable()">
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="clearData()">🗑️ ลบข้อมูลทั้งหมด</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>สถานะ</th>
+            <th>รหัส</th>
+            <th>ชื่อ-สกุล (TH)</th>
+            <th>ชื่อ-สกุล (EN)</th>
+            <th>ตำแหน่ง</th>
+            <th>สาขา/แผนก</th>
+            <th>วันที่เริ่มงาน</th>
+            <th>เงินเดือน</th>
+          </tr>
+        </thead>
+        <tbody id="empTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3: SETTINGS -->
+<div id="page-settings" class="page">
+  <div class="card">
+    <h2>🏢 ข้อมูลบริษัท</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>ชื่อบริษัท (ภาษาไทย)</label>
+        <input type="text" id="s_companyTH" placeholder="บริษัท เมก้า คลินิก จำกัด">
+      </div>
+      <div class="form-group">
+        <label>Company Name (English)</label>
+        <input type="text" id="s_companyEN" placeholder="Mega Clinic Co., Ltd.">
+      </div>
+      <div class="form-group full">
+        <label>ที่อยู่ (ภาษาไทย)</label>
+        <textarea id="s_addressTH" placeholder="123 ถนน... กรุงเทพฯ 10xxx"></textarea>
+      </div>
+      <div class="form-group full">
+        <label>Address (English)</label>
+        <textarea id="s_addressEN" placeholder="123 Road... Bangkok 10xxx"></textarea>
+      </div>
+      <div class="form-group">
+        <label>โทรศัพท์</label>
+        <input type="text" id="s_phone" placeholder="02-xxx-xxxx">
+      </div>
+      <div class="form-group">
+        <label>อีเมล</label>
+        <input type="text" id="s_email" placeholder="hr@company.com">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>✍️ ผู้มีอำนาจลงนาม</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>ชื่อผู้ลงนาม (ภาษาไทย)</label>
+        <input type="text" id="s_signerTH" placeholder="นาย/นาง/นางสาว...">
+      </div>
+      <div class="form-group">
+        <label>Signer Name (English)</label>
+        <input type="text" id="s_signerEN" placeholder="Mr./Mrs./Miss...">
+      </div>
+      <div class="form-group">
+        <label>ตำแหน่ง (ภาษาไทย)</label>
+        <input type="text" id="s_positionTH" placeholder="ผู้จัดการฝ่ายทรัพยากรบุคคล">
+      </div>
+      <div class="form-group">
+        <label>Position (English)</label>
+        <input type="text" id="s_positionEN" placeholder="HR Manager">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🖼️ โลโก้บริษัท</h2>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div>
+        <button class="btn btn-outline" onclick="document.getElementById('logoFile').click()">เลือกรูปโลโก้</button>
+        <input type="file" id="logoFile" accept="image/*" style="display:none" onchange="handleLogo(event)">
+        <p style="font-size:12px;color:#6b7280;margin-top:4px">PNG หรือ JPG (แนะนำพื้นหลังใส)</p>
+      </div>
+      <img id="logoPreview" class="logo-preview" style="display:none">
+      <button class="btn btn-danger btn-sm" onclick="clearLogo()" id="clearLogoBtn" style="display:none">ลบโลโก้</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>👁️ ตัวอย่างหัวหนังสือ</h2>
+    <div class="cert-header-preview" id="settingsPreview"></div>
+  </div>
+
+  <div style="display:flex;gap:12px">
+    <button class="btn btn-gold" style="padding:12px 32px;font-size:16px" onclick="saveSettings()">💾 บันทึกการตั้งค่า</button>
+    <button class="btn btn-outline" onclick="loadSettingsToForm()">↩️ รีเซ็ต</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+let employees = [];
+let currentEmp = null;
+let selectedTmpl = null;
+let currentLang = 'th';
+let settings = {};
+
+const COUNTRIES = [
+  {code:'JP',th:'ญี่ปุ่น',en:'Japan',thOfficial:'ญี่ปุ่น',enOfficial:'Japan'},
+  {code:'KR',th:'เกาหลีใต้',en:'South Korea',thOfficial:'สาธารณรัฐเกาหลี',enOfficial:'Republic of Korea'},
+  {code:'CN',th:'จีน',en:'China',thOfficial:'สาธารณรัฐประชาชนจีน',enOfficial:"People's Republic of China"},
+  {code:'HK',th:'ฮ่องกง',en:'Hong Kong',thOfficial:'เขตปกครองพิเศษฮ่องกงแห่งสาธารณรัฐประชาชนจีน',enOfficial:'Hong Kong Special Administrative Region of the People\'s Republic of China'},
+  {code:'TW',th:'ไต้หวัน',en:'Taiwan',thOfficial:'ไต้หวัน',enOfficial:'Taiwan'},
+  {code:'SG',th:'สิงคโปร์',en:'Singapore',thOfficial:'สาธารณรัฐสิงคโปร์',enOfficial:'Republic of Singapore'},
+  {code:'MY',th:'มาเลเซีย',en:'Malaysia',thOfficial:'มาเลเซีย',enOfficial:'Malaysia'},
+  {code:'ID',th:'อินโดนีเซีย',en:'Indonesia',thOfficial:'สาธารณรัฐอินโดนีเซีย',enOfficial:'Republic of Indonesia'},
+  {code:'PH',th:'ฟิลิปปินส์',en:'Philippines',thOfficial:'สาธารณรัฐฟิลิปปินส์',enOfficial:'Republic of the Philippines'},
+  {code:'VN',th:'เวียดนาม',en:'Vietnam',thOfficial:'สาธารณรัฐสังคมนิยมเวียดนาม',enOfficial:'Socialist Republic of Vietnam'},
+  {code:'MM',th:'เมียนมา',en:'Myanmar',thOfficial:'สาธารณรัฐแห่งสหภาพเมียนมา',enOfficial:'Republic of the Union of Myanmar'},
+  {code:'LA',th:'ลาว',en:'Laos',thOfficial:'สาธารณรัฐประชาธิปไตยประชาชนลาว',enOfficial:"Lao People's Democratic Republic"},
+  {code:'KH',th:'กัมพูชา',en:'Cambodia',thOfficial:'ราชอาณาจักรกัมพูชา',enOfficial:'Kingdom of Cambodia'},
+  {code:'IN',th:'อินเดีย',en:'India',thOfficial:'สาธารณรัฐอินเดีย',enOfficial:'Republic of India'},
+  {code:'AU',th:'ออสเตรเลีย',en:'Australia',thOfficial:'เครือรัฐออสเตรเลีย',enOfficial:'Commonwealth of Australia'},
+  {code:'NZ',th:'นิวซีแลนด์',en:'New Zealand',thOfficial:'นิวซีแลนด์',enOfficial:'New Zealand'},
+  {code:'US',th:'สหรัฐอเมริกา',en:'United States',thOfficial:'สหรัฐอเมริกา',enOfficial:'United States of America'},
+  {code:'CA',th:'แคนาดา',en:'Canada',thOfficial:'แคนาดา',enOfficial:'Canada'},
+  {code:'UK',th:'สหราชอาณาจักร',en:'United Kingdom',thOfficial:'สหราชอาณาจักรบริเตนใหญ่และไอร์แลนด์เหนือ',enOfficial:'United Kingdom of Great Britain and Northern Ireland'},
+  {code:'DE',th:'เยอรมนี',en:'Germany',thOfficial:'สหพันธ์สาธารณรัฐเยอรมนี',enOfficial:'Federal Republic of Germany'},
+  {code:'FR',th:'ฝรั่งเศส',en:'France',thOfficial:'สาธารณรัฐฝรั่งเศส',enOfficial:'French Republic'},
+  {code:'IT',th:'อิตาลี',en:'Italy',thOfficial:'สาธารณรัฐอิตาลี',enOfficial:'Italian Republic'},
+  {code:'ES',th:'สเปน',en:'Spain',thOfficial:'ราชอาณาจักรสเปน',enOfficial:'Kingdom of Spain'},
+  {code:'NL',th:'เนเธอร์แลนด์',en:'Netherlands',thOfficial:'ราชอาณาจักรเนเธอร์แลนด์',enOfficial:'Kingdom of the Netherlands'},
+  {code:'CH',th:'สวิตเซอร์แลนด์',en:'Switzerland',thOfficial:'สมาพันธรัฐสวิส',enOfficial:'Swiss Confederation'},
+  {code:'SE',th:'สวีเดน',en:'Sweden',thOfficial:'ราชอาณาจักรสวีเดน',enOfficial:'Kingdom of Sweden'},
+  {code:'NO',th:'นอร์เวย์',en:'Norway',thOfficial:'ราชอาณาจักรนอร์เวย์',enOfficial:'Kingdom of Norway'},
+  {code:'DK',th:'เดนมาร์ก',en:'Denmark',thOfficial:'ราชอาณาจักรเดนมาร์ก',enOfficial:'Kingdom of Denmark'},
+  {code:'AE',th:'สหรัฐอาหรับเอมิเรตส์',en:'UAE',thOfficial:'สหรัฐอาหรับเอมิเรตส์',enOfficial:'United Arab Emirates'},
+  {code:'RU',th:'รัสเซีย',en:'Russia',thOfficial:'สหพันธรัฐรัสเซีย',enOfficial:'Russian Federation'},
+  {code:'BR',th:'บราซิล',en:'Brazil',thOfficial:'สหพันธ์สาธารณรัฐบราซิล',enOfficial:'Federative Republic of Brazil'},
+];
+
+const TEMPLATES = [
+  {id:1,titleTH:'หนังสือรับรองการทำงาน (มีเงินเดือน)',titleEN:'Employment Certificate with Salary',sub:'สำหรับพนักงานปัจจุบัน',requireActive:true,hasSalary:true},
+  {id:2,titleTH:'หนังสือรับรองการทำงาน (ไม่มีเงินเดือน)',titleEN:'Employment Certificate without Salary',sub:'สำหรับพนักงานปัจจุบัน',requireActive:true,hasSalary:false},
+  {id:3,titleTH:'หนังสือรับรองการทำงาน (มีเงินเดือน) — ผู้ลาออก',titleEN:'Work History Certificate with Salary',sub:'สำหรับพนักงานที่ลาออก',requireResigned:true,hasSalary:true},
+  {id:4,titleTH:'หนังสือรับรองการทำงาน (ไม่มีเงินเดือน) — ผู้ลาออก',titleEN:'Work History Certificate without Salary',sub:'สำหรับพนักงานที่ลาออก',requireResigned:true,hasSalary:false},
+  {id:5,titleTH:'หนังสือรับรองเพื่อเดินทางไปต่างประเทศ',titleEN:'Certificate of Employment for Travel Abroad',sub:'สำหรับพนักงานปัจจุบัน',requireActive:true,hasSalary:true,isTravel:true},
+];
+
+// ============================================================
+// INIT
+// ============================================================
+function init(){
+  loadData();
+  loadSettings();
+  renderTemplates();
+  populateCountries();
+  renderTable();
+  updateStats();
+  loadSettingsToForm();
+  updateSettingsPreview();
+}
+
+function loadData(){
+  try{ employees = JSON.parse(localStorage.getItem('hrEmp')||'[]'); }catch(e){ employees=[]; }
+}
+
+function loadSettings(){
+  try{ settings = JSON.parse(localStorage.getItem('hrSet')||'{}'); }catch(e){ settings={}; }
+}
+
+function populateCountries(){
+  const sel = document.getElementById('travelCountry');
+  sel.innerHTML = COUNTRIES.map(c=>`<option value="${c.code}">${c.th} | ${c.en}</option>`).join('');
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='emp'){renderTable();updateStats();}
+  if(id==='settings'){loadSettingsToForm();}
+}
+
+// ============================================================
+// PAGE 1: CERTIFICATE ISSUANCE
+// ============================================================
+function searchEmployee(){
+  const q = document.getElementById('empSearch').value.trim().toLowerCase();
+  if(!q) return;
+  const emp = employees.find(e=>e.id&&e.id.toLowerCase()===q);
+  currentEmp = emp||null;
+  selectedTmpl = null;
+  renderEmpCard();
+  renderTemplates();
+  document.getElementById('certPreview').innerHTML=`<div class="cert-placeholder"><div style="font-size:64px">📄</div><p>${emp?'เลือกประเภทหนังสือและกด "สร้างหนังสือรับรอง"':'ไม่พบพนักงานรหัส: '+q}</p></div>`;
+  document.getElementById('certActions').style.display='none';
+}
+
+function renderEmpCard(){
+  const el = document.getElementById('empCard');
+  if(!currentEmp){el.innerHTML='';return;}
+  const e=currentEmp;
+  const active=e.status==='ON';
+  el.innerHTML=`<div class="emp-card">
+    <div class="emp-id">${e.id||''}</div>
+    <div class="emp-name">${e.titleTH||''}${e.nameTH||''} ${e.lastnameTH||''}</div>
+    <div class="emp-meta">
+      ${e.titleEN||''} ${e.nameEN||''} ${e.lastnameEN||''}<br>
+      ${e.position||''}<br>
+      ${e.branch||''} ${e.department?'/ '+e.department:''}
+    </div>
+    <div style="margin-top:8px"><span class="status-badge ${active?'status-active':'status-resigned'}">${active?'● ปัจจุบัน':'● ลาออกแล้ว'}</span></div>
+  </div>`;
+}
+
+function renderTemplates(){
+  const el = document.getElementById('tmplList');
+  const isActive = currentEmp&&currentEmp.status==='ON';
+  const isResigned = currentEmp&&currentEmp.status!=='ON';
+  el.innerHTML = TEMPLATES.map(t=>{
+    let disabled=false;
+    if(t.requireActive&&!isActive) disabled=true;
+    if(t.requireResigned&&!isResigned) disabled=true;
+    if(!currentEmp) disabled=true;
+    const sel = selectedTmpl===t.id?'selected':'';
+    return `<button class="tmpl-btn ${sel}" ${disabled?'disabled':''} onclick="selectTemplate(${t.id})">
+      <div class="tmpl-num">${t.id}</div>
+      <div class="tmpl-info">
+        <div class="tmpl-title">${t.titleTH}</div>
+        <div class="tmpl-sub">${t.sub}</div>
+      </div>
+    </button>`;
+  }).join('');
+}
+
+function selectTemplate(id){
+  selectedTmpl=id;
+  renderTemplates();
+  const t=TEMPLATES.find(x=>x.id===id);
+  document.getElementById('travelSection').style.display=t&&t.isTravel?'block':'none';
+}
+
+function setLang(lang){
+  currentLang=lang;
+  document.getElementById('langTH').classList.toggle('active',lang==='th');
+  document.getElementById('langEN').classList.toggle('active',lang==='en');
+}
+
+// ============================================================
+// GENERATE CERTIFICATE
+// ============================================================
+function generateCert(){
+  if(!currentEmp){toast('กรุณาค้นหาพนักงานก่อน','error');return;}
+  if(!selectedTmpl){toast('กรุณาเลือกประเภทหนังสือ','error');return;}
+  const t=TEMPLATES.find(x=>x.id===selectedTmpl);
+  if(!t){return;}
+  if(t.isTravel){
+    const dep=document.getElementById('travelDepart').value;
+    const ret=document.getElementById('travelReturn').value;
+    if(!dep||!ret){toast('กรุณาระบุวันที่เดินทาง','error');return;}
+  }
+  const html=currentLang==='th'?buildCertTH(t):buildCertEN(t);
+  document.getElementById('certPreview').innerHTML=html;
+  document.getElementById('certActions').style.display='flex';
+}
+
+function refNum(){
+  const now=new Date();
+  const yy=String(now.getFullYear()-2000).padStart(2,'0');
+  const mm=String(now.getMonth()+1).padStart(2,'0');
+  const seq=String(Math.floor(Math.random()*900)+100);
+  return `HR-${yy}${mm}-${seq}`;
+}
+
+function thaiDate(d){
+  if(!d)d=new Date();
+  else if(typeof d==='string')d=parseDate(d);
+  if(!d||isNaN(d)) return '-';
+  const months=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  return `${d.getDate()} ${months[d.getMonth()]} พ.ศ. ${d.getFullYear()+543}`;
+}
+
+function engDate(d){
+  if(!d)d=new Date();
+  else if(typeof d==='string')d=parseDate(d);
+  if(!d||isNaN(d)) return '-';
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function parseDate(s){
+  if(!s)return null;
+  // try formats: DD/MM/YYYY, YYYY-MM-DD, MM/DD/YYYY
+  let m;
+  if(m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)){return new Date(+m[3],+m[2]-1,+m[1]);}
+  if(m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/)){return new Date(+m[1],+m[2]-1,+m[3]);}
+  const d=new Date(s);
+  return isNaN(d)?null:d;
+}
+
+function fmtSalary(n,lang){
+  if(!n) return lang==='th'?'-':'-';
+  const num=parseFloat(String(n).replace(/,/g,''));
+  if(isNaN(num)) return '-';
+  const s=num.toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:0});
+  return lang==='th'?`${s} บาท`:`THB ${s}`;
+}
+
+function certHeader(lang){
+  const s=settings;
+  const logo=s.logo?`<img src="${s.logo}" class="cert-logo"><br>`:'';
+  if(lang==='th'){
+    return `<div class="cert-header">
+      ${logo}
+      <div class="cert-company-th">${s.companyTH||'[ชื่อบริษัท]'}</div>
+      <div class="cert-company-en">${s.companyEN||''}</div>
+      <div class="cert-address">${(s.addressTH||'').replace(/\n/g,'<br>')}${s.phone?'<br>โทร. '+s.phone:''} ${s.email?'| '+s.email:''}</div>
+    </div>
+    <hr class="cert-divider">`;
+  } else {
+    return `<div class="cert-header">
+      ${logo}
+      <div class="cert-company-th">${s.companyEN||'[Company Name]'}</div>
+      <div class="cert-company-en">${s.companyTH||''}</div>
+      <div class="cert-address">${(s.addressEN||'').replace(/\n/g,'<br>')}${s.phone?'<br>Tel. '+s.phone:''} ${s.email?'| '+s.email:''}</div>
+    </div>
+    <hr class="cert-divider">`;
+  }
+}
+
+function buildCertTH(t){
+  const e=currentEmp; const s=settings;
+  const ref=refNum();
+  const today=thaiDate();
+  const start=thaiDate(e.startDate);
+  let titleTH='หนังสือรับรองการทำงาน';
+  if(t.requireResigned) titleTH='หนังสือรับรองการทำงาน';
+  if(t.isTravel) titleTH='หนังสือรับรองการทำงาน เพื่อการเดินทางไปต่างประเทศ';
+
+  let details=`<table class="cert-details"><tbody>
+    <tr><td>ชื่อ - นามสกุล</td><td>: &nbsp;${e.titleTH||''}${e.nameTH||''} ${e.lastnameTH||''}</td></tr>
+    <tr><td>ตำแหน่ง</td><td>: &nbsp;${e.position||'-'}</td></tr>
+    <tr><td>สาขา / แผนก</td><td>: &nbsp;${[e.branch,e.department].filter(Boolean).join(' / ')||'-'}</td></tr>
+    <tr><td>วันที่เริ่มงาน</td><td>: &nbsp;${start}</td></tr>`;
+  if(e.status!=='ON'&&e.resignDate){
+    details+=`<tr><td>วันสุดท้ายในการทำงาน</td><td>: &nbsp;${thaiDate(e.resignDate)}</td></tr>`;
+  }
+  if(t.hasSalary){
+    details+=`<tr><td>อัตราเงินเดือน</td><td>: &nbsp;${fmtSalary(e.salary,'th')}</td></tr>`;
+  }
+  if(t.isTravel){
+    const code=document.getElementById('travelCountry').value;
+    const country=COUNTRIES.find(c=>c.code===code);
+    const dep=document.getElementById('travelDepart').value;
+    const ret=document.getElementById('travelReturn').value;
+    details+=`<tr><td>ประเทศปลายทาง</td><td>: &nbsp;${country?country.thOfficial:'-'}</td></tr>
+    <tr><td>วันที่เดินทาง</td><td>: &nbsp;${thaiDate(dep)} ถึง ${thaiDate(ret)}</td></tr>`;
+  }
+  details+=`</tbody></table>`;
+
+  let opening='';
+  if(e.status==='ON'){
+    opening=`หนังสือฉบับนี้เพื่อรับรองว่า ${e.titleTH||''}${e.nameTH||''} ${e.lastnameTH||''} เป็นพนักงานของ${s.companyTH||'บริษัท'} โดยมีรายละเอียดดังนี้`;
+  } else {
+    opening=`หนังสือฉบับนี้เพื่อรับรองว่า ${e.titleTH||''}${e.nameTH||''} ${e.lastnameTH||''} เคยเป็นพนักงานของ${s.companyTH||'บริษัท'} โดยมีรายละเอียดดังนี้`;
+  }
+
+  let travelPurpose='';
+  if(t.isTravel){
+    const code=document.getElementById('travelCountry').value;
+    const country=COUNTRIES.find(c=>c.code===code);
+    travelPurpose=`<p>ออกหนังสือรับรองฉบับนี้เพื่อประกอบการยื่นขอวีซ่า และยืนยันการเดินทางไป${country?country.thOfficial:'ต่างประเทศ'}ของพนักงาน</p>`;
+  }
+
+  return `<div class="cert-wrapper">
+    ${certHeader('th')}
+    <div class="cert-title">${titleTH}</div>
+    <div class="cert-ref-row">
+      <span>เลขที่หนังสือ: ${ref}</span>
+      <span>วันที่ออกหนังสือ: ${today}</span>
+    </div>
+    <div class="cert-body">
+      <p>เรียน ผู้เกี่ยวข้อง</p>
+      <p style="text-indent:2em">${opening}</p>
+      ${details}
+      ${travelPurpose}
+      <p style="text-indent:2em">จึงออกหนังสือรับรองฉบับนี้เพื่อเป็นหลักฐานในการยืนยัน และขอรับรองว่าข้อมูลข้างต้นเป็นความจริงทุกประการ</p>
+    </div>
+    <div class="cert-sign">
+      <br><br>
+      <div class="cert-sign-line"></div>
+      <div style="font-weight:600">${s.signerTH||'(.......................................)' }</div>
+      <div>${s.positionTH||''}</div>
+      <div>ฝ่ายทรัพยากรบุคคล</div>
+      <div>${s.companyTH||''}</div>
+    </div>
+  </div>`;
+}
+
+function buildCertEN(t){
+  const e=currentEmp; const s=settings;
+  const ref=refNum();
+  const today=engDate();
+  const start=engDate(e.startDate);
+  let titleEN='EMPLOYMENT CERTIFICATE';
+  if(t.requireResigned) titleEN='CERTIFICATE OF EMPLOYMENT';
+  if(t.isTravel) titleEN='CERTIFICATE OF EMPLOYMENT FOR TRAVEL ABROAD';
+
+  let details=`<table class="cert-details"><tbody>
+    <tr><td>Name</td><td>: &nbsp;${e.titleEN||''}${e.nameEN||''} ${e.lastnameEN||''}</td></tr>
+    <tr><td>Position</td><td>: &nbsp;${e.position||'-'}</td></tr>
+    <tr><td>Branch / Department</td><td>: &nbsp;${[e.branch,e.department].filter(Boolean).join(' / ')||'-'}</td></tr>
+    <tr><td>Date of Employment</td><td>: &nbsp;${start}</td></tr>`;
+  if(e.status!=='ON'&&e.resignDate){
+    details+=`<tr><td>Last Working Day</td><td>: &nbsp;${engDate(e.resignDate)}</td></tr>`;
+  }
+  if(t.hasSalary){
+    details+=`<tr><td>Monthly Salary</td><td>: &nbsp;${fmtSalary(e.salary,'en')}</td></tr>`;
+  }
+  if(t.isTravel){
+    const code=document.getElementById('travelCountry').value;
+    const country=COUNTRIES.find(c=>c.code===code);
+    const dep=document.getElementById('travelDepart').value;
+    const ret=document.getElementById('travelReturn').value;
+    details+=`<tr><td>Destination Country</td><td>: &nbsp;${country?country.enOfficial:'-'}</td></tr>
+    <tr><td>Travel Period</td><td>: &nbsp;${engDate(dep)} to ${engDate(ret)}</td></tr>`;
+  }
+  details+=`</tbody></table>`;
+
+  const empStatus=e.status==='ON'?'is currently employed':'was previously employed';
+  let opening=`This is to certify that ${e.titleEN||''}${e.nameEN||''} ${e.lastnameEN||''} ${empStatus} with ${s.companyEN||'our company'}, with the following details:`;
+
+  let travelPurpose='';
+  if(t.isTravel){
+    const code=document.getElementById('travelCountry').value;
+    const country=COUNTRIES.find(c=>c.code===code);
+    travelPurpose=`<p>This letter is issued to support the visa application and to confirm the travel of the above-mentioned employee to ${country?country.enOfficial:'abroad'}.</p>`;
+  }
+
+  return `<div class="cert-wrapper">
+    ${certHeader('en')}
+    <div class="cert-title">${titleEN}</div>
+    <div class="cert-ref-row">
+      <span>Ref: ${ref}</span>
+      <span>Date: ${today}</span>
+    </div>
+    <div class="cert-body">
+      <p>To Whom It May Concern,</p>
+      <p style="text-indent:2em">${opening}</p>
+      ${details}
+      ${travelPurpose}
+      <p style="text-indent:2em">This certificate is issued upon the request of the individual named above for their personal use and to whom it may concern. All information stated herein is true and correct to the best of our knowledge.</p>
+    </div>
+    <div class="cert-sign">
+      <br><br>
+      <div class="cert-sign-line"></div>
+      <div style="font-weight:600">${s.signerEN||'(......................................)'}</div>
+      <div>${s.positionEN||''}</div>
+      <div>Human Resources Department</div>
+      <div>${s.companyEN||''}</div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// PAGE 2: EMPLOYEE MANAGEMENT
+// ============================================================
+function dzDragOver(e){e.preventDefault();document.getElementById('dropzone').classList.add('dragover');}
+function dzDragLeave(e){document.getElementById('dropzone').classList.remove('dragover');}
+function dzDrop(e){
+  e.preventDefault();
+  document.getElementById('dropzone').classList.remove('dragover');
+  const f=e.dataTransfer.files[0];
+  if(f) processExcel(f);
+}
+
+function handleFile(e){
+  const f=e.target.files[0];
+  if(f) processExcel(f);
+  e.target.value='';
+}
+
+function processExcel(file){
+  const msg=document.getElementById('importMsg');
+  msg.innerHTML=`<span style="color:var(--navy)">⏳ กำลังประมวลผล...</span>`;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:'array'});
+      // find sheet
+      let sheetName=wb.SheetNames.find(n=>n.toLowerCase().includes('dataemployee'));
+      if(!sheetName) sheetName=wb.SheetNames[0];
+      const ws=wb.Sheets[sheetName];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      // skip header row(s) — find first row where col0 is ON or OFF
+      let dataRows=rows.filter(r=>r[0]==='ON'||r[0]==='OFF');
+      if(!dataRows.length){
+        // try row index 1 onwards
+        dataRows=rows.slice(1).filter(r=>r.length>5);
+      }
+      const parsed=dataRows.map(r=>({
+        status:r[0]||'',
+        id:String(r[2]||'').trim(),
+        titleTH:r[7]||'',
+        nameTH:r[8]||'',
+        lastnameTH:r[9]||'',
+        titleEN:r[10]||'',
+        nameEN:r[11]||'',
+        lastnameEN:r[12]||'',
+        startDate:excelDateToStr(r[13]),
+        resignDate:excelDateToStr(r[16]),
+        position:r[18]||'',
+        branch:r[5]||'',
+        department:r[21]||'',
+        salary:r[55]||'',
+      })).filter(r=>r.id);
+      employees=parsed;
+      localStorage.setItem('hrEmp',JSON.stringify(employees));
+      msg.innerHTML=`<span style="color:var(--green)">✅ นำเข้าสำเร็จ! พบพนักงาน ${parsed.length} คน จากชีต "${sheetName}"</span>`;
+      updateStats();
+      renderTable();
+    }catch(err){
+      msg.innerHTML=`<span style="color:var(--red)">❌ เกิดข้อผิดพลาด: ${err.message}</span>`;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function excelDateToStr(v){
+  if(!v) return '';
+  if(typeof v==='number'){
+    // Excel serial date
+    const d=new Date(Math.round((v-25569)*86400*1000));
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  return String(v);
+}
+
+function updateStats(){
+  const total=employees.length;
+  const active=employees.filter(e=>e.status==='ON').length;
+  const resigned=total-active;
+  document.getElementById('statTotal').textContent=total;
+  document.getElementById('statActive').textContent=active;
+  document.getElementById('statResigned').textContent=resigned;
+}
+
+function renderTable(){
+  const q=(document.getElementById('empTableSearch')?.value||'').toLowerCase();
+  const tbody=document.getElementById('empTableBody');
+  const rows=employees.filter(e=>{
+    if(!q) return true;
+    return (e.id+e.nameTH+e.lastnameTH+e.nameEN+e.lastnameEN+e.position+e.branch).toLowerCase().includes(q);
+  });
+  if(!rows.length){
+    tbody.innerHTML=`<tr><td colspan="8" class="empty-state">${employees.length?'ไม่พบผลลัพธ์':'ยังไม่มีข้อมูลพนักงาน กรุณานำเข้าไฟล์ Excel'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=rows.map(e=>`<tr>
+    <td><span class="status-badge ${e.status==='ON'?'status-active':'status-resigned'}">${e.status==='ON'?'ปัจจุบัน':'ลาออก'}</span></td>
+    <td style="font-weight:600">${e.id}</td>
+    <td>${e.titleTH}${e.nameTH} ${e.lastnameTH}</td>
+    <td>${e.titleEN}${e.nameEN} ${e.lastnameEN}</td>
+    <td>${e.position||'-'}</td>
+    <td>${[e.branch,e.department].filter(Boolean).join(' / ')||'-'}</td>
+    <td>${e.startDate?thaiDate(e.startDate):'-'}</td>
+    <td>${e.salary?fmtSalary(e.salary,'th'):'-'}</td>
+  </tr>`).join('');
+}
+
+function clearData(){
+  if(!confirm('ต้องการลบข้อมูลพนักงานทั้งหมดหรือไม่?')) return;
+  employees=[];
+  localStorage.removeItem('hrEmp');
+  currentEmp=null;
+  selectedTmpl=null;
+  renderTable();
+  updateStats();
+  renderEmpCard();
+  renderTemplates();
+  toast('ลบข้อมูลทั้งหมดแล้ว');
+}
+
+// ============================================================
+// PAGE 3: SETTINGS
+// ============================================================
+function loadSettingsToForm(){
+  const s=settings;
+  document.getElementById('s_companyTH').value=s.companyTH||'';
+  document.getElementById('s_companyEN').value=s.companyEN||'';
+  document.getElementById('s_addressTH').value=s.addressTH||'';
+  document.getElementById('s_addressEN').value=s.addressEN||'';
+  document.getElementById('s_phone').value=s.phone||'';
+  document.getElementById('s_email').value=s.email||'';
+  document.getElementById('s_signerTH').value=s.signerTH||'';
+  document.getElementById('s_signerEN').value=s.signerEN||'';
+  document.getElementById('s_positionTH').value=s.positionTH||'';
+  document.getElementById('s_positionEN').value=s.positionEN||'';
+  if(s.logo){
+    document.getElementById('logoPreview').src=s.logo;
+    document.getElementById('logoPreview').style.display='block';
+    document.getElementById('clearLogoBtn').style.display='inline-flex';
+  }
+  updateSettingsPreview();
+}
+
+function saveSettings(){
+  settings={
+    companyTH:document.getElementById('s_companyTH').value,
+    companyEN:document.getElementById('s_companyEN').value,
+    addressTH:document.getElementById('s_addressTH').value,
+    addressEN:document.getElementById('s_addressEN').value,
+    phone:document.getElementById('s_phone').value,
+    email:document.getElementById('s_email').value,
+    signerTH:document.getElementById('s_signerTH').value,
+    signerEN:document.getElementById('s_signerEN').value,
+    positionTH:document.getElementById('s_positionTH').value,
+    positionEN:document.getElementById('s_positionEN').value,
+    logo:settings.logo||'',
+  };
+  localStorage.setItem('hrSet',JSON.stringify(settings));
+  updateSettingsPreview();
+  toast('บันทึกการตั้งค่าแล้ว ✓');
+}
+
+function handleLogo(e){
+  const f=e.target.files[0];
+  if(!f) return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    settings.logo=ev.target.result;
+    document.getElementById('logoPreview').src=ev.target.result;
+    document.getElementById('logoPreview').style.display='block';
+    document.getElementById('clearLogoBtn').style.display='inline-flex';
+    updateSettingsPreview();
+  };
+  reader.readAsDataURL(f);
+  e.target.value='';
+}
+
+function clearLogo(){
+  settings.logo='';
+  document.getElementById('logoPreview').style.display='none';
+  document.getElementById('clearLogoBtn').style.display='none';
+  updateSettingsPreview();
+}
+
+function updateSettingsPreview(){
+  const s=settings||{};
+  const el=document.getElementById('settingsPreview');
+  if(!el) return;
+  const compTH=document.getElementById('s_companyTH')?.value||s.companyTH||'[ชื่อบริษัท]';
+  const compEN=document.getElementById('s_companyEN')?.value||s.companyEN||'';
+  const addrTH=document.getElementById('s_addressTH')?.value||s.addressTH||'';
+  const phone=document.getElementById('s_phone')?.value||s.phone||'';
+  const email=document.getElementById('s_email')?.value||s.email||'';
+  const logo=s.logo||'';
+  el.innerHTML=`
+    ${logo?`<img src="${logo}" style="max-height:60px;max-width:160px;object-fit:contain;margin-bottom:6px"><br>`:''}
+    <div style="font-size:16px;font-weight:700;color:var(--navy)">${compTH}</div>
+    <div style="font-size:13px;color:var(--navy)">${compEN}</div>
+    <div style="font-size:11px;color:#555;margin-top:4px">${addrTH.replace(/\n/g,' ')} ${phone?'| โทร. '+phone:''} ${email?'| '+email:''}</div>
+    <hr style="border:none;border-top:2px solid var(--navy);margin:8px 0">
+  `;
+  // Live update while typing
+  ['s_companyTH','s_companyEN','s_addressTH','s_phone','s_email'].forEach(id=>{
+    const inp=document.getElementById(id);
+    if(inp&&!inp._liveLinked){
+      inp._liveLinked=true;
+      inp.addEventListener('input',updateSettingsPreview);
+    }
+  });
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function toast(msg,type='success'){
+  const el=document.createElement('div');
+  el.className='toast';
+  el.style.background=type==='error'?'#dc2626':'#1a2744';
+  el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),3000);
+}
+
+// ============================================================
+// START
+// ============================================================
+init();
+</script>
+</body>
+</html>
