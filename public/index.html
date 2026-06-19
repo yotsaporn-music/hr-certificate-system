@@ -167,37 +167,25 @@
     <div id="loginCompanyName" style="font-size:20px;font-weight:700;color:#1e3a8a;margin-bottom:4px">HR Certificate System</div>
     <div style="font-size:14px;color:#d63384;font-weight:500;margin-bottom:24px">ระบบออกหนังสือรับรองการทำงาน</div>
 
-    <!-- Step 1: Employee ID -->
-    <div id="loginStep1">
-      <div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;text-align:left">ขั้นตอนที่ 1 — รหัสพนักงาน</div>
-      <input type="text" id="loginEmpId" placeholder="รหัสพนักงาน (เช่น 0001)" onkeydown="if(event.key==='Enter')doLoginStep1()"
-        style="width:100%;padding:14px 16px;border:2px solid #e5e7eb;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:16px;outline:none;text-align:center;letter-spacing:2px;margin-bottom:12px;box-sizing:border-box;transition:border-color .2s"
-        onfocus="this.style.borderColor='#d63384'" onblur="this.style.borderColor='#e5e7eb'">
-      <div id="loginError" style="display:none;color:#dc2626;font-size:13px;margin-bottom:10px;padding:8px;background:#fef2f2;border-radius:6px;text-align:left"></div>
-      <button onclick="doLoginStep1()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1e3a8a,#d63384);color:#fff;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:opacity .2s" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
-        ถัดไป →
-      </button>
-      <div style="margin-top:14px;font-size:11px;color:#9ca3af">Admin: พิมพ์ ADMIN เพื่อเข้าจัดการระบบ</div>
+    <div id="loginError" style="display:none;color:#dc2626;font-size:13px;margin-bottom:10px;padding:8px;background:#fef2f2;border-radius:6px;text-align:left"></div>
+    <div style="text-align:left;margin-bottom:6px">
+      <label style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">Email</label>
     </div>
-
-    <!-- Step 2: National ID last 6 digits -->
-    <div id="loginStep2" style="display:none">
-      <div id="loginEmpFound" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:16px;text-align:left">
-        <div style="font-size:11px;color:#16a34a;font-weight:700">✓ พบพนักงาน</div>
-        <div id="loginEmpName" style="font-size:15px;font-weight:700;color:#1e3a8a"></div>
-      </div>
-      <div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;text-align:left">ขั้นตอนที่ 2 — 6 ตัวท้ายเลขบัตรประชาชน</div>
-      <input type="password" id="loginPin" placeholder="• • • • • •" maxlength="6" onkeydown="if(event.key==='Enter')doLoginStep2()"
-        style="width:100%;padding:14px 16px;border:2px solid #e5e7eb;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:24px;outline:none;text-align:center;letter-spacing:6px;margin-bottom:12px;box-sizing:border-box;transition:border-color .2s"
-        onfocus="this.style.borderColor='#d63384'" onblur="this.style.borderColor='#e5e7eb'">
-      <div id="loginPinError" style="display:none;color:#dc2626;font-size:13px;margin-bottom:10px;padding:8px;background:#fef2f2;border-radius:6px;text-align:left"></div>
-      <button onclick="doLoginStep2()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1e3a8a,#d63384);color:#fff;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:opacity .2s" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
-        เข้าสู่ระบบ 🔓
-      </button>
-      <button onclick="backToStep1()" style="width:100%;padding:10px;background:none;border:none;color:#6b7280;font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;margin-top:6px">
-        ← กลับ
-      </button>
+    <input type="email" id="loginEmail" placeholder="email@company.com" onkeydown="if(event.key==='Enter')document.getElementById('loginPassword').focus()"
+      style="width:100%;padding:13px 16px;border:2px solid #e5e7eb;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:15px;outline:none;margin-bottom:12px;box-sizing:border-box;transition:border-color .2s"
+      onfocus="this.style.borderColor='#d63384'" onblur="this.style.borderColor='#e5e7eb'">
+    <div style="text-align:left;margin-bottom:6px">
+      <label style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">รหัสพนักงาน (Password)</label>
     </div>
+    <input type="password" id="loginPassword" placeholder="รหัสพนักงาน เช่น 0001" onkeydown="if(event.key==='Enter')doLogin()"
+      style="width:100%;padding:13px 16px;border:2px solid #e5e7eb;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:15px;outline:none;margin-bottom:16px;box-sizing:border-box;transition:border-color .2s"
+      onfocus="this.style.borderColor='#d63384'" onblur="this.style.borderColor='#e5e7eb'">
+    <!-- hidden for compat -->
+    <input type="hidden" id="loginEmpId">
+    <button onclick="doLogin()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1e3a8a,#d63384);color:#fff;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:opacity .2s" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+      เข้าสู่ระบบ 🔓
+    </button>
+    <div style="margin-top:14px;font-size:11px;color:#9ca3af">Admin: Email ใดก็ได้ / Password: ADMIN</div>
   </div>
 </div>
 
@@ -465,61 +453,33 @@ function checkLogin(){
   document.getElementById('loginPage').style.display='flex';
 }
 
-let _loginTempEmp=null;
-
-function doLoginStep1(){
-  const id=document.getElementById('loginEmpId').value.trim().toUpperCase();
-  if(!id) return;
+function doLogin(){
+  const email=(document.getElementById('loginEmail').value||'').trim().toLowerCase();
+  const password=(document.getElementById('loginPassword').value||'').trim();
   const errEl=document.getElementById('loginError');
   errEl.style.display='none';
-  // Admin bypass — no PIN needed
-  if(id==='ADMIN'){
+  if(!email||!password){ errEl.textContent='กรุณากรอก Email และรหัสพนักงาน'; errEl.style.display='block'; return; }
+  // Admin bypass
+  if(password.toUpperCase()==='ADMIN'){
     currentUser={id:'ADMIN',titleTH:'',nameTH:'ผู้ดูแลระบบ',nameEN:'Administrator',isAdmin:true};
     sessionStorage.setItem('hrSession',JSON.stringify(currentUser));
     hideLoginPage(); applyUserRole(); updateHeaderUser(); return;
   }
-  const emp=employees.find(e=>e.id&&e.id.toUpperCase()===id);
-  if(!emp){ errEl.textContent='ไม่พบรหัสพนักงานนี้ในระบบ กรุณาลองใหม่'; errEl.style.display='block'; return; }
-  // Check if this employee has national ID stored
-  if(!emp.nationalId){
-    // No national ID in data → allow login directly (graceful fallback)
-    currentUser=emp;
-    sessionStorage.setItem('hrSession',JSON.stringify(currentUser));
-    hideLoginPage(); applyUserRole(); updateHeaderUser(); return;
+  // Find employee: match email (case-insensitive) AND employee ID (password)
+  const emp=employees.find(e=>{
+    const emailMatch=e.email&&e.email.toLowerCase()===email;
+    const idMatch=e.id&&e.id.toUpperCase()===password.toUpperCase();
+    return emailMatch&&idMatch;
+  });
+  if(!emp){
+    errEl.textContent='Email หรือรหัสพนักงานไม่ถูกต้อง กรุณาลองใหม่';
+    errEl.style.display='block';
+    return;
   }
-  // Go to step 2
-  _loginTempEmp=emp;
-  document.getElementById('loginStep1').style.display='none';
-  document.getElementById('loginStep2').style.display='block';
-  const name=`${emp.titleTH||''}${emp.nameTH||''} ${emp.lastnameTH||''}`.trim();
-  document.getElementById('loginEmpName').textContent=name;
-  document.getElementById('loginPin').value='';
-  document.getElementById('loginPinError').style.display='none';
-  setTimeout(()=>document.getElementById('loginPin').focus(),100);
-}
-
-function doLoginStep2(){
-  const pin=document.getElementById('loginPin').value.trim();
-  const errEl=document.getElementById('loginPinError');
-  errEl.style.display='none';
-  if(!pin||pin.length!==6){ errEl.textContent='กรุณากรอก 6 ตัวท้ายเลขบัตรประชาชน'; errEl.style.display='block'; return; }
-  const last6=(_loginTempEmp.nationalId||'').slice(-6);
-  if(pin!==last6){ errEl.textContent='เลขบัตรประชาชนไม่ถูกต้อง กรุณาลองใหม่'; errEl.style.display='block'; document.getElementById('loginPin').value=''; return; }
-  currentUser=_loginTempEmp;
-  _loginTempEmp=null;
+  currentUser=emp;
   sessionStorage.setItem('hrSession',JSON.stringify(currentUser));
   hideLoginPage(); applyUserRole(); updateHeaderUser();
 }
-
-function backToStep1(){
-  _loginTempEmp=null;
-  document.getElementById('loginStep2').style.display='none';
-  document.getElementById('loginStep1').style.display='block';
-  document.getElementById('loginPin').value='';
-  document.getElementById('loginPinError').style.display='none';
-}
-
-function doLogin(){ doLoginStep1(); } // backward compat
 
 function hideLoginPage(){
   const lp=document.getElementById('loginPage');
@@ -938,17 +898,17 @@ function processExcel(file){
       if(!dataRows.length){
         dataRows=rows.slice(1).filter(r=>r.length>5);
       }
-      // Auto-detect nationalId and phone columns from first 10 data rows
-      let nationalIdCol=-1, phoneCol=-1;
-      const sampleRows=dataRows.slice(0,10);
+      // Auto-detect email, nationalId, phone columns
+      let emailCol=-1, nationalIdCol=-1, phoneCol=-1;
+      const sampleRows=dataRows.slice(0,15);
       const colCount=Math.max(...sampleRows.map(r=>r.length));
       for(let c=0;c<colCount;c++){
         for(const r of sampleRows){
-          const v=String(r[c]||'').replace(/[-\s]/g,'');
-          if(nationalIdCol===-1&&/^\d{13}$/.test(v)){nationalIdCol=c;break;}
-          if(phoneCol===-1&&/^0[689]\d{8}$/.test(v)){phoneCol=c;break;}
+          const v=String(r[c]||'').trim();
+          if(emailCol===-1&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){emailCol=c;break;}
+          if(nationalIdCol===-1&&/^\d{13}$/.test(v.replace(/[-\s]/g,''))){nationalIdCol=c;break;}
+          if(phoneCol===-1&&/^0[689]\d{8}$/.test(v.replace(/[-\s]/g,''))){phoneCol=c;break;}
         }
-        if(nationalIdCol>-1&&phoneCol>-1)break;
       }
       const parsed=dataRows.map(r=>({
         status:r[0]||'',
@@ -965,10 +925,11 @@ function processExcel(file){
         branch:r[5]||'',
         department:r[21]||'',
         salary:r[55]||'',
+        email:emailCol>-1?String(r[emailCol]||'').trim().toLowerCase():'',
         nationalId:nationalIdCol>-1?String(r[nationalIdCol]||'').replace(/[-\s]/g,''):'',
         phone:phoneCol>-1?String(r[phoneCol]||'').replace(/[-\s]/g,''):'',
       })).filter(r=>r.id);
-      const detectedMsg=`(บัตรปชช: col ${nationalIdCol>=0?nationalIdCol:'ไม่พบ'}, เบอร์: col ${phoneCol>=0?phoneCol:'ไม่พบ'})`;
+      const detectedMsg=`(Email: col ${emailCol>=0?emailCol:'ไม่พบ'}, บัตรปชช: col ${nationalIdCol>=0?nationalIdCol:'ไม่พบ'})`;
       employees=parsed;
       localStorage.setItem('hrEmp',JSON.stringify(employees));
       msg.innerHTML=`<span style="color:var(--green)">✅ นำเข้าสำเร็จ! พบพนักงาน ${parsed.length} คน จากชีต "${sheetName}" ${detectedMsg}</span>`;
